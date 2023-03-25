@@ -1,30 +1,20 @@
 use std::env; // allows you to pass arguments to the commands line
-use std::fs; // allows for file system manipulation
+use std::process; // provides abort and exit for terminating current process
+use minigrep::Config; // brings project logic from lib.rs and Config struct types into scope
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     // dbg!(args);  // dbg! returns reference value
 
-    let config = parse_config(&args);
+    let config = Config::build(&args).unwrap_or_else(|err| {
+        println!("Problem parsing arguments: {err}");
+        process::exit(1);
 
-    println!("Searching for {}", config.query);
-    println!("In file {}", config.file_path);
+    });
 
-    let contents = fs::read_to_string(config.file_path)
-    .expect("Should have been able to read the file");
+    if let Err(e) = minigrep::run(config) {
+        print!("Application error: {e}");
+        process::exit(1);
+    }
 
-    println!("With text:\n{contents}");
-}
-
-//
-struct Config {
-    query: String,
-    file_path: String,
-}
-
-fn parse_config(args: &[String]) -> Config {
-    let query = &args[1].clone();
-    let file_path = &args[2].clone();
-
-    Config { query, file_path }
 }
